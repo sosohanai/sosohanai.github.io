@@ -1,0 +1,486 @@
+# 구글포토 이미지 OCR 적용후 문제유형
+1. 구글포토 앨범이름으로 이미지 읽기
+2. 구글 vision API 로 이미지 OCR 적용
+3. IMAGE SHOW
+
+
+# 구글 API 인증키 설정
+1. google vision API 사용설정
+구글클라우드 콘솔에서 vision API 사용설정후 인증키 json 파일 다운로드
+현재 client_secret_desktop.json 파일로 사용
+2. google photo 사용설정
+구글포토 인증키 service-account-file.json 파일로 사용
+
+
+```python
+%pip install --upgrade google-api-python-client
+%pip install --upgrade google-cloud-vision
+%pip install --upgrade google-auth-oauthlib
+```
+
+    Requirement already satisfied: google-api-python-client in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (2.125.0)
+    Requirement already satisfied: httplib2<1.dev0,>=0.19.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-python-client) (0.22.0)
+    Requirement already satisfied: google-auth!=2.24.0,!=2.25.0,<3.0.0.dev0,>=1.32.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-python-client) (2.29.0)
+    Requirement already satisfied: google-auth-httplib2<1.0.0,>=0.2.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-python-client) (0.2.0)
+    Requirement already satisfied: google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-python-client) (2.18.0)
+    Requirement already satisfied: uritemplate<5,>=3.0.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-python-client) (4.1.1)
+    Requirement already satisfied: googleapis-common-protos<2.0.dev0,>=1.56.2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (1.63.0)
+    Requirement already satisfied: protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0.dev0,>=3.19.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (4.25.3)
+    Requirement already satisfied: proto-plus<2.0.0dev,>=1.22.3 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (1.23.0)
+    Requirement already satisfied: requests<3.0.0.dev0,>=2.18.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (2.31.0)
+    Requirement already satisfied: cachetools<6.0,>=2.0.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0.dev0,>=1.32.0->google-api-python-client) (5.3.3)
+    Requirement already satisfied: pyasn1-modules>=0.2.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0.dev0,>=1.32.0->google-api-python-client) (0.4.0)
+    Requirement already satisfied: rsa<5,>=3.1.4 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0.dev0,>=1.32.0->google-api-python-client) (4.9)
+    Requirement already satisfied: pyparsing!=3.0.0,!=3.0.1,!=3.0.2,!=3.0.3,<4,>=2.4.2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from httplib2<1.dev0,>=0.19.0->google-api-python-client) (3.1.2)
+    Requirement already satisfied: pyasn1<0.7.0,>=0.4.6 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from pyasn1-modules>=0.2.1->google-auth!=2.24.0,!=2.25.0,<3.0.0.dev0,>=1.32.0->google-api-python-client) (0.5.1)
+    Requirement already satisfied: charset-normalizer<4,>=2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (2.0.4)
+    Requirement already satisfied: idna<4,>=2.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (3.4)
+    Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (2.1.0)
+    Requirement already satisfied: certifi>=2017.4.17 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0.dev0,>=1.31.5->google-api-python-client) (2024.2.2)
+    [33mDEPRECATION: textract 1.6.5 has a non-standard dependency specifier extract-msg<=0.29.*. pip 24.0 will enforce this behaviour change. A possible replacement is to upgrade to a newer version of textract or contact the author to suggest that they release a version with a conforming dependency specifiers. Discussion can be found at https://github.com/pypa/pip/issues/12063[0m[33m
+    [0mNote: you may need to restart the kernel to use updated packages.
+    Requirement already satisfied: google-cloud-vision in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (3.7.2)
+    Requirement already satisfied: google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (2.18.0)
+    Requirement already satisfied: google-auth!=2.24.0,!=2.25.0,<3.0.0dev,>=2.14.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-cloud-vision) (2.29.0)
+    Requirement already satisfied: proto-plus<2.0.0dev,>=1.22.3 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-cloud-vision) (1.23.0)
+    Requirement already satisfied: protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<5.0.0dev,>=3.19.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-cloud-vision) (4.25.3)
+    Requirement already satisfied: googleapis-common-protos<2.0.dev0,>=1.56.2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (1.63.0)
+    Requirement already satisfied: requests<3.0.0.dev0,>=2.18.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (2.31.0)
+    Requirement already satisfied: grpcio<2.0dev,>=1.33.2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (1.62.1)
+    Requirement already satisfied: grpcio-status<2.0.dev0,>=1.33.2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (1.62.1)
+    Requirement already satisfied: cachetools<6.0,>=2.0.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0dev,>=2.14.1->google-cloud-vision) (5.3.3)
+    Requirement already satisfied: pyasn1-modules>=0.2.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0dev,>=2.14.1->google-cloud-vision) (0.4.0)
+    Requirement already satisfied: rsa<5,>=3.1.4 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0dev,>=2.14.1->google-cloud-vision) (4.9)
+    Requirement already satisfied: pyasn1<0.7.0,>=0.4.6 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from pyasn1-modules>=0.2.1->google-auth!=2.24.0,!=2.25.0,<3.0.0dev,>=2.14.1->google-cloud-vision) (0.5.1)
+    Requirement already satisfied: charset-normalizer<4,>=2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (2.0.4)
+    Requirement already satisfied: idna<4,>=2.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (3.4)
+    Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (2.1.0)
+    Requirement already satisfied: certifi>=2017.4.17 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests<3.0.0.dev0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-cloud-vision) (2024.2.2)
+    [33mDEPRECATION: textract 1.6.5 has a non-standard dependency specifier extract-msg<=0.29.*. pip 24.0 will enforce this behaviour change. A possible replacement is to upgrade to a newer version of textract or contact the author to suggest that they release a version with a conforming dependency specifiers. Discussion can be found at https://github.com/pypa/pip/issues/12063[0m[33m
+    [0mNote: you may need to restart the kernel to use updated packages.
+    Requirement already satisfied: google-auth-oauthlib in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (1.2.0)
+    Requirement already satisfied: google-auth>=2.15.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth-oauthlib) (2.29.0)
+    Requirement already satisfied: requests-oauthlib>=0.7.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth-oauthlib) (2.0.0)
+    Requirement already satisfied: cachetools<6.0,>=2.0.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth>=2.15.0->google-auth-oauthlib) (5.3.3)
+    Requirement already satisfied: pyasn1-modules>=0.2.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth>=2.15.0->google-auth-oauthlib) (0.4.0)
+    Requirement already satisfied: rsa<5,>=3.1.4 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from google-auth>=2.15.0->google-auth-oauthlib) (4.9)
+    Requirement already satisfied: oauthlib>=3.0.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests-oauthlib>=0.7.0->google-auth-oauthlib) (3.2.2)
+    Requirement already satisfied: requests>=2.0.0 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests-oauthlib>=0.7.0->google-auth-oauthlib) (2.31.0)
+    Requirement already satisfied: pyasn1<0.7.0,>=0.4.6 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from pyasn1-modules>=0.2.1->google-auth>=2.15.0->google-auth-oauthlib) (0.5.1)
+    Requirement already satisfied: charset-normalizer<4,>=2 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests>=2.0.0->requests-oauthlib>=0.7.0->google-auth-oauthlib) (2.0.4)
+    Requirement already satisfied: idna<4,>=2.5 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests>=2.0.0->requests-oauthlib>=0.7.0->google-auth-oauthlib) (3.4)
+    Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests>=2.0.0->requests-oauthlib>=0.7.0->google-auth-oauthlib) (2.1.0)
+    Requirement already satisfied: certifi>=2017.4.17 in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from requests>=2.0.0->requests-oauthlib>=0.7.0->google-auth-oauthlib) (2024.2.2)
+    [33mDEPRECATION: textract 1.6.5 has a non-standard dependency specifier extract-msg<=0.29.*. pip 24.0 will enforce this behaviour change. A possible replacement is to upgrade to a newer version of textract or contact the author to suggest that they release a version with a conforming dependency specifiers. Discussion can be found at https://github.com/pypa/pip/issues/12063[0m[33m
+    [0mNote: you may need to restart the kernel to use updated packages.
+
+
+### 앨범목록 출력, 이미지 OCR 적용후 적용된 이미지 block 출력
+
+
+
+```python
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+import os
+from google.cloud import vision
+from PIL import Image, ImageDraw
+import requests
+from enum import Enum
+
+
+# OAuth 2.0 클라이언트 ID와 비밀 정보 설정
+class FeatureType(Enum):
+    PAGE = 1
+    BLOCK = 2
+    PARA = 3
+    WORD = 4
+    SYMBOL = 5
+
+
+def draw_boxes(image, bounds, color):
+    """Draws a border around the image using the hints in the vector list.
+
+    Args:
+        image: the input image object.
+        bounds: list of coordinates for the boxes.
+        color: the color of the box.
+
+    Returns:
+        An image with colored bounds added.
+    """
+    draw = ImageDraw.Draw(image)
+
+    for bound in bounds:
+        draw.polygon(
+            [
+                bound.vertices[0].x,
+                bound.vertices[0].y,
+                bound.vertices[1].x,
+                bound.vertices[1].y,
+                bound.vertices[2].x,
+                bound.vertices[2].y,
+                bound.vertices[3].x,
+                bound.vertices[3].y,
+            ],
+            None,
+            color,
+        )
+    return image
+
+
+def process_word(word, feature):
+    bounds = []
+    if feature == FeatureType.WORD:
+        bounds.append(word.bounding_box)
+
+        if feature == FeatureType.SYMBOL:
+            bounds.extend(symbol.bounding_box for symbol in word.symbols)
+    return bounds
+
+
+def process_paragraph(paragraph, feature):
+    bounds = []
+    if feature == FeatureType.PARA:
+        bounds.append(paragraph.bounding_box)
+
+    for word in paragraph.words:
+        bounds.extend(process_word(word, feature))
+    return bounds
+
+
+def get_document_bounds(image_file, feature):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'service-account-file.json'
+    client_options = {'api_endpoint': 'us-vision.googleapis.com'}
+    client = vision.ImageAnnotatorClient(client_options=client_options)
+
+    with open(image_file, "rb") as image_file:
+        content = image_file.read()
+    content = {'content': content}
+    image = vision.Image(**content)
+    response = client.document_text_detection(image=image)
+    document = response.full_text_annotation
+
+    bounds = []
+
+    for page in document.pages:
+        for block in page.blocks:
+            for paragraph in block.paragraphs:
+                bounds.extend(process_paragraph(paragraph, feature))
+    return bounds
+
+
+def save_txt(filein):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'service-account-file.json'
+
+    client_options = {'api_endpoint': 'us-vision.googleapis.com'}
+    client = vision.ImageAnnotatorClient(client_options=client_options)
+
+    with open(filein, "rb") as image_file:
+        content = image_file.read()
+
+    image = vision.Image(content=content)
+
+    response = client.document_text_detection(image=image)
+    document = response.full_text_annotation
+
+    output_file_path = filein.split('/')[1].split('.')[0] + ".txt"
+
+    with open(output_file_path, "w", encoding="utf-8") as output_file:
+        pages_text = ""
+        for page in document.pages:
+            page_text = ""
+            for block in page.blocks:
+                block_text = ""
+                for paragraph in block.paragraphs:
+                    paragraph_text = ""
+                    for word in paragraph.words:
+                        word_text = "".join([symbol.text for symbol in word.symbols])
+                        paragraph_text += word_text + " "
+                    block_text += paragraph_text + "\n"                   
+                page_text += block_text + "\n"               
+            pages_text += page_text + "\n"
+        print(pages_text)
+        output_file.write(pages_text)
+    print("텍스트를 파일에 작성하였습니다.")
+
+
+def render_doc_text(filein, fileout):
+    """Outlines document features (blocks, paragraphs and words) given an image.
+
+    Args:
+        filein: path to the input image.
+        fileout: path to the output image.
+    """
+
+    image = Image.open(filein)
+    bounds = get_document_bounds(filein, FeatureType.BLOCK)
+    draw_boxes(image, bounds, "blue")
+    bounds = get_document_bounds(filein, FeatureType.PARA)
+    draw_boxes(image, bounds, "red")
+    bounds = get_document_bounds(filein, FeatureType.WORD)
+    draw_boxes(image, bounds, "yellow")
+
+    save_txt(filein)
+
+    if fileout != 0:
+        image.save(fileout)
+    else:
+        image.show()
+
+
+# OAuth 2.0 클라이언트 ID와 비밀 정보 설정
+client_secrets_file = 'client_secret_desktop.json'
+
+# 스코프 설정
+# https://www.googleapis.com/auth/photoslibrary.readonly 스코프를 사용하여 읽기 전용 액세스 권한을 요청합니다.
+scopes = ['https://www.googleapis.com/auth/photoslibrary.readonly']
+
+# 사용자 인증 흐름 설정
+flow = InstalledAppFlow.from_client_secrets_file(
+    client_secrets_file,
+    scopes=scopes
+)
+
+# 사용자 인증 및 액세스 토큰 획득
+# credentials = flow.run_console()
+credentials = flow.run_local_server(port=8088)
+# http://127.0.0.1/accounts/google/login/callback/
+# credentials = flow.from_client_secrets_file(client_secrets_file)
+# Google Photos API 서비스 객체 생성
+service = build('photoslibrary', 'v1', credentials=credentials, static_discovery=False)
+# ..http=self.credentials.authorize(Http()),static_discovery=False)
+# 앨범 목록 가져오기
+results = service.albums().list(
+    pageSize=10,  # 한 페이지에 표시할 앨범 수
+    excludeNonAppCreatedData=False  # 앱 외부에서 생성된 데이터 포함 여부
+).execute()
+
+albums = results.get('albums', [])
+
+if not albums:
+    print('앨범을 찾을 수 없습니다.')
+else:
+    print('앨범 목록:')
+    for album in albums:
+        print(f"{album['title']} (ID: {album['id']})")
+
+# 특정 앨범에서 사진 가져오기 (첫 번째 앨범의 ID 사용)
+if albums:
+    album_id = 'AIqQLL9Z5GMPBtXlB0nnw--TOv1_mZ23XeL1ExlGLt16Iwh-MyApT3UMfRSYhCKDhRjVmT0fwNUW'  # albums[0]['id'] # 첫 번째 앨범의 ID
+
+    response = service.mediaItems().search(body={'albumId': album_id}).execute()
+    items = response.get('mediaItems', [])
+    if not items:
+        print('사진을 찾을 수 없습니다.')
+    else:
+        for item in items:
+            if item['filename'] == "IMG_7629.png":
+                print(f"사진 제목: {item['filename']}, URL: {item['baseUrl']}")
+                # 이미지 URL 설정
+                image_url = item['baseUrl']
+                original_image = '=w0-h0-n-k-no'
+                image_url = image_url + original_image
+
+                # 이미지 다운로드
+                response = requests.get(image_url)
+                if response.status_code == 200:
+                    with open('download/' + item['filename'], "wb") as image_file:
+                        image_file.write(response.content)
+                    print("이미지 다운로드 완료")
+
+                    render_doc_text('download/' + item['filename'], 0)
+
+                else:
+                    print("이미지를 다운로드하는 동안 문제가 발생했습니다. 상태 코드:", response.status_code)
+
+```
+
+    Please visit this URL to authorize this application: https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=321040457013-9c5098pkpmsdma3c2psajfong2kdv1kq.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8088%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fphotoslibrary.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-vision&state=OFs1v4RnehyzYMYKTgrtpLxDIDRNsj&access_type=offline
+    Processing image 1/17
+    try JSON Object
+    {'questions': [{'question_no': '06', 'question': '다음 중 데이터 분석 수준 진단 결과에 대한 설명으로 옳지 않은 것은?', 'choices': ['1. 정착형은 준비도는 높으나 조직, 인력, 분석 업무, 분석 기법 등을 기업 내부에서 제한적으로 사용하는 경우이다.', '2. 준비형은 기업에 필요한 데이터, 인력, 조직, 분석 업무, 분서 기법 등이 적용되어 있지 않아 사전 준비가 필요한 경우이다.', '3. 도입형은 기업에서 활용하는 분석 업무, 기법 등이 부족하지만 적용 조직 등 준비도가 높아 바로 도입할 수 있는 경우이다.', '4. 확산형은 기업에 필요한 6가지 분석 구성 요소를 갖추고 있고, 현재 부분적으로 도입되어 지속적인 확산이 필요한 경우이다.'], 'answer': '1', 'explanation': '정착형은 데이터 분석 수준 진단 결과에 대한 설명으로 옳지 않은 내용입니다.'}, {'question_no': '07', 'question': '다음 중 분석 준비도(Readiness)의 진단 영역으로 옳지 않은 것은?', 'choices': ['1. 분석문화', '2. 분석결과', '3. 분석기법', '4. 분석데이터'], 'answer': '2', 'explanation': '분석 결과가 분석 준비도의 진단 영역에 해당하지 않습니다.'}, {'question_no': '08', 'question': '다음 중 정형, 반정형, 비정형으로 구분하는 빅데이터 특성으로 옳은 것은?', 'choices': ['1. 가치', '2. 규모', '3. 속도', '4. 다양성'], 'answer': '4', 'explanation': '다양성은 빅데이터를 정형, 반정형, 비정형으로 구분하는 특성 중 하나입니다.'}, {'question_no': '09', 'question': '다음 중 데이터 전처리의 수행 단계로 옳은 것은?', 'choices': ['1. 시스템 구현', '2. 데이터 준비', '3. 데이터 분석', '4. 평가 및 전개'], 'answer': '2', 'explanation': '데이터 전처리는 데이터 준비 단계를 포함합니다.'}, {'question_no': '10', 'question': '다음 중 데이터 사이언스에 대한 설명으로 옳은 것은?', 'choices': ['1. 의학, 공학 등 다양한 연구 분야에 적용되고 있다.', '2. 데이터 처리 시점이 사후 처리에서 사전 처리로 이동하였다.', '3. 데이터의 가치 판단 기준이 양보다 질로 그 중요도가 달라졌다.', '4. 단순한 상관관계 중심에서 이론적 인과관계로 변화되는 경향이 있다.'], 'answer': '1', 'explanation': '다양한 분야에 데이터 사이언스가 적용되고 있는 것이 맞는 설명입니다.'}]}
+    기출_VER1_DECK1.apkg 파일이 생성되었습니다.
+    Processing image 2/17
+    try JSON Object
+    {'questions': [{'question_no': '11', 'question': '다음 중 데이터 거버넌스의 구성 요소로 옳지 않은 것은?', 'choices': ['1. 원칙', '2. 조직', '3. 프로세스', '4. IT 인프라'], 'answer': '4', 'explanation': '데이터 거버넌스의 구성 요소에는 IT 인프라가 포함되어 있습니다.'}, {'question_no': '12', 'question': '다음 중 데이터 산업에 대한 설명으로 옳지 않은 것은?', 'choices': ['1. 데이터를 관리하고 분석하기 위한 소프트웨어 영역이 있다.', '2. 데이터 그 자체를 제공하거나 이를 가공한 정보를 제공한다.', '3. 데이터 산업을 통해 Human to Human 상호 작용이 높아진다.', '4. 데이터 산업은 인프라 영역과 서비스 영역으로 구성되어 있다.'], 'answer': '3', 'explanation': '데이터 산업을 통해 Human to Human 상호 작용이 높아진다는 설명이 옳지 않습니다.'}, {'question_no': '13', 'question': '다음 중 빅 데이터 플랫폼의 계층 구조에 대한 설명으로 옳지 않은 것은?', 'choices': ['1. 최상단에 소프트웨어 계층이 있으며, 아래로 플랫폼 계층, 인프라 스트럭쳐 계층, 하드웨어 계층이 존재한다.', '2. 소프트웨어 계층에서는 빅 데이터 애플리케이션을 구성하며 데이터 처리 및 분석과 이를 위한 데이터 수집, 정제를 한다.', '3. 인프라 스트럭쳐 계층에서는 자원 배치와 스토리지 관리, 노드 및 네트워크 관리 등을 통해 빅데이터 처리와 분석에 필요한 자원을 제공한다.', '4. 플랫폼 계층에서는 빅 데이터 애플리케이션을 실행하기 위한 플랫폼을 제공하며, 데이터 관리 모듈, 자원 관리 모듈, 서비스 관리 모듈, 보안 모듈 등으로 구성되어 있다.'], 'answer': '1', 'explanation': '빅 데이터 플랫폼의 계층 구조에서 소프트웨어 계층은 최상단에 위치하지 않습니다.'}, {'question_no': '14', 'question': '다음 중 분석 마스터 플랜에 대한 설명으로 옳은 것은?', 'choices': ['1. 데이터 분석 기획의 특성을 고려하지 않는다.', '2. 분석 과제의 중요도나 난이도는 고려하지 않는다.', '3. 중장기적 관점의 수행 계획을 수립하는 절차이다.', '4. 그 과제의 목적이나 목표에 따라 부분적인 방향성을 제시한다.'], 'answer': '3', 'explanation': '분석 마스터 플랜은 중장기적 관점의 수행 계획을 수립하는 절차입니다.'}, {'question_no': '15', 'question': '다음 중 데이터 분석을 통한 개선 사항을 도출하는 단계로 옳은 것은?', 'choices': ['1. 모델 개발', '2. 분석 목표 수립', '3. 도메인 이슈 도출', '4. 프로젝트 계획 수립'], 'answer': '3', 'explanation': '데이터 분석을 통한 개선 사항을 도출하는 단계 중 하나는 도메인 이슈 도출입니다.'}]}
+    기출_VER1_DECK2.apkg 파일이 생성되었습니다.
+    Processing image 3/17
+    JSON 형식이 아닙니다.
+    {
+        questions: [
+            {
+                question_no: '16',
+                question: '다음 중 데이터 분석 조직에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 기능형은 특정 현업 부서에 국한된 협소한 분석을 수행할 가능성이 높다.',
+                    '2. 집중형은 전사 분석 업무를 별도의 전담 조직에서 수행하므로 중복되지 않는다.',
+                    '3. 분산형은 분석 전문 인력을 현업 부서에 배치하여 분석 업무를 신속하게 수행한다.',
+                    '4. 조직 구조는 집중형, 기능형, 분산형으로 구분할 수 있으며, 기능형은 DSCoE 조직이 없다.'
+                ],
+                answer: '4',
+                explanation: '기능형은 DSCoE(Data Science Center of Excellence) 조직으로 구분되며, 특정 현업 부서에 국한된 분석이 아닌 전사적인 데이터 분석을 수행하는 조직 형태이다.'
+            },
+            {
+                question_no: '17',
+                question: '다음 중 데이터를 추출하여 저장하는 기술로 옳은 것은?',
+                choices: [
+                    '1. ETL',
+                    '2. OLAP',
+                    '3. Hadoop',
+                    '4. Data Mart'
+                ],
+                answer: '1',
+                explanation: 'ETL(Extract, Transform, Load)은 데이터 추출, 변환, 적재를 수행하는 기술로 데이터를 원하는 형태로 추출하고 저장하는 역할을 한다.'
+            },
+            {
+                question_no: '18',
+                question: '다음 중 탐색적 데이터 분석(EDA)에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 데이터 구조를 파악할 수 있다.',
+                    '2. 시각화 도구를 이용하여 수행할 수 있다.',
+                    '3. 분석 모델을 선정하고 구성하기 위한 절차로 볼 수 있다.',
+                    '4. 주성분 분석(PCA)은 탐색적 데이터 분석에 포함되지 않는다.'
+                ],
+                answer: '4',
+                explanation: 'PCA(Principal Component Analysis)은 탐색적 데이터 분석의 중요한 기법 중 하나로 데이터 차원을 축소하는 과정 중 하나이다.'
+            },
+            {
+                question_no: '19',
+                question: '다음 중 분산 파일 시스템에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 네트워크로 공유하는 여러 호스트의 파일에 접근할 수 있는 파일 시스템이다.',
+                    '2. 데이터를 분산하여 저장하면 데이터 추출 및 가공 시 빠르게 처리할 수 있다.',
+                    '3. 대표적으로 GFS(Google File System), HDFS(Hadoop Distributed File System)가 있다.',
+                    '4. 이기종 데이터 저장 장치를 하나의 데이터 서버에 연결하여 총괄적으로 데이터를 저장 및 관리하는 시스템이다.'
+                ],
+                answer: '4',
+                explanation: '분산 파일 시스템은 여러 호스트 간 파일을 공유하고, 데이터를 분산 저장하여 처리 성능을 향상시키는 시스템이지만, 하나의 서버에 이기종 데이터를 연결하는 시스템은 아니다.'
+            },
+            {
+                question_no: '20',
+                question: '다음 중 병렬 DBMS에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 분산 아키텍처를 가지고 있다.',
+                    '2. 데이터 중복의 최소화로 관계형 DBMS보다 성능이 우수하다.',
+                    '3. 데이터 파티셔닝과 데이터 병렬 처리를 통해 고성능을 제공한다.',
+                    '4. 데이터를 복제하여 분산한 관계로 데이터 변경에 따른 관리 비용이 발생한다.'
+                ],
+                answer: '4',
+                explanation: '병렬 DBMS는 데이터를 병렬 처리하는 구조를 가지고 있지만, 데이터를 복제하여 관리하는 방식은 분산 시스템이 아닌 복제 시스템에 해당한다.'
+            }
+        ]
+    }
+    questions 속성이 없습니다.
+    {
+        questions: [
+            {
+                question_no: '16',
+                question: '다음 중 데이터 분석 조직에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 기능형은 특정 현업 부서에 국한된 협소한 분석을 수행할 가능성이 높다.',
+                    '2. 집중형은 전사 분석 업무를 별도의 전담 조직에서 수행하므로 중복되지 않는다.',
+                    '3. 분산형은 분석 전문 인력을 현업 부서에 배치하여 분석 업무를 신속하게 수행한다.',
+                    '4. 조직 구조는 집중형, 기능형, 분산형으로 구분할 수 있으며, 기능형은 DSCoE 조직이 없다.'
+                ],
+                answer: '4',
+                explanation: '기능형은 DSCoE(Data Science Center of Excellence) 조직으로 구분되며, 특정 현업 부서에 국한된 분석이 아닌 전사적인 데이터 분석을 수행하는 조직 형태이다.'
+            },
+            {
+                question_no: '17',
+                question: '다음 중 데이터를 추출하여 저장하는 기술로 옳은 것은?',
+                choices: [
+                    '1. ETL',
+                    '2. OLAP',
+                    '3. Hadoop',
+                    '4. Data Mart'
+                ],
+                answer: '1',
+                explanation: 'ETL(Extract, Transform, Load)은 데이터 추출, 변환, 적재를 수행하는 기술로 데이터를 원하는 형태로 추출하고 저장하는 역할을 한다.'
+            },
+            {
+                question_no: '18',
+                question: '다음 중 탐색적 데이터 분석(EDA)에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 데이터 구조를 파악할 수 있다.',
+                    '2. 시각화 도구를 이용하여 수행할 수 있다.',
+                    '3. 분석 모델을 선정하고 구성하기 위한 절차로 볼 수 있다.',
+                    '4. 주성분 분석(PCA)은 탐색적 데이터 분석에 포함되지 않는다.'
+                ],
+                answer: '4',
+                explanation: 'PCA(Principal Component Analysis)은 탐색적 데이터 분석의 중요한 기법 중 하나로 데이터 차원을 축소하는 과정 중 하나이다.'
+            },
+            {
+                question_no: '19',
+                question: '다음 중 분산 파일 시스템에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 네트워크로 공유하는 여러 호스트의 파일에 접근할 수 있는 파일 시스템이다.',
+                    '2. 데이터를 분산하여 저장하면 데이터 추출 및 가공 시 빠르게 처리할 수 있다.',
+                    '3. 대표적으로 GFS(Google File System), HDFS(Hadoop Distributed File System)가 있다.',
+                    '4. 이기종 데이터 저장 장치를 하나의 데이터 서버에 연결하여 총괄적으로 데이터를 저장 및 관리하는 시스템이다.'
+                ],
+                answer: '4',
+                explanation: '분산 파일 시스템은 여러 호스트 간 파일을 공유하고, 데이터를 분산 저장하여 처리 성능을 향상시키는 시스템이지만, 하나의 서버에 이기종 데이터를 연결하는 시스템은 아니다.'
+            },
+            {
+                question_no: '20',
+                question: '다음 중 병렬 DBMS에 대한 설명으로 옳지 않은 것은?',
+                choices: [
+                    '1. 분산 아키텍처를 가지고 있다.',
+                    '2. 데이터 중복의 최소화로 관계형 DBMS보다 성능이 우수하다.',
+                    '3. 데이터 파티셔닝과 데이터 병렬 처리를 통해 고성능을 제공한다.',
+                    '4. 데이터를 복제하여 분산한 관계로 데이터 변경에 따른 관리 비용이 발생한다.'
+                ],
+                answer: '4',
+                explanation: '병렬 DBMS는 데이터를 병렬 처리하는 구조를 가지고 있지만, 데이터를 복제하여 관리하는 방식은 분산 시스템이 아닌 복제 시스템에 해당한다.'
+            }
+        ]
+    }
+
+
+
+    ---------------------------------------------------------------------------
+
+    AttributeError                            Traceback (most recent call last)
+
+    Cell In[4], line 178, in generate_anki_deck(ocr_texts, name)
+        177 try:
+    --> 178     json_object.get('questions')
+        179 except AttributeError:
+
+
+    AttributeError: 'str' object has no attribute 'get'
+
+    
+    During handling of the above exception, another exception occurred:
+
+
+    AttributeError                            Traceback (most recent call last)
+
+    Cell In[4], line 213
+        211 # 패키지 이름 지정
+        212 apkg_name = deck_name
+    --> 213 run_ocr_pipeline(album_name, deck_name, apkg_name)
+
+
+    Cell In[4], line 110, in run_ocr_pipeline(album_title, deck_title, apkg_title)
+        108 ocr_text = convert_ocr_to_text(document)
+        109 file_name = apkg_title + str(idx) + '.apkg'
+    --> 110 write_to_file(file_name, generate_anki_deck(ocr_text, deck_title))
+
+
+    Cell In[4], line 182, in generate_anki_deck(ocr_texts, name)
+        180     print('questions 속성이 없습니다.')
+        181     print(result_data)
+    --> 182     json_object.append({'questions': json_object})
+        184 for question_data in json_object.get('questions', []):
+        185     if question_data['choices'] != '':
+
+
+    AttributeError: 'str' object has no attribute 'append'
+
+
+
+```python
+
+```

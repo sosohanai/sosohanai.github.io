@@ -1,0 +1,77 @@
+# anki
+anki 카드를 만들고 .apkg 파일로 내보내기
+
+
+
+
+
+```python
+%pip install genanki
+```
+
+    Requirement already satisfied: genanki in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (0.13.1)
+    Requirement already satisfied: cached-property in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from genanki) (1.5.2)
+    Requirement already satisfied: frozendict in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from genanki) (2.4.1)
+    Requirement already satisfied: chevron in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from genanki) (0.14.0)
+    Requirement already satisfied: pyyaml in /opt/anaconda3/envs/pythonProject/lib/python3.11/site-packages (from genanki) (6.0.1)
+    [33mDEPRECATION: textract 1.6.5 has a non-standard dependency specifier extract-msg<=0.29.*. pip 24.0 will enforce this behaviour change. A possible replacement is to upgrade to a newer version of textract or contact the author to suggest that they release a version with a conforming dependency specifiers. Discussion can be found at https://github.com/pypa/pip/issues/12063[0m[33m
+    [0mNote: you may need to restart the kernel to use updated packages.
+
+
+### 간단예제
+
+
+
+```python
+
+import genanki
+
+# 질문과 정답을 리스트로 정의
+questions_answers = [
+    ("다음 중 다른 데이터와 연결하여 분석하는 맵리듀스 패턴으로 올바른 것은?", "① 조인 패턴"),
+    ("다음 중 네트워크상에서 여러 호스트 컴퓨터의 공유된 데이터에 접근하는 올바른 방식은?", "① 분산 파일 시스템"),
+    ("다음 중 공공데이터와 같은 외부 데이터를 사용할 때의 장점으로 올바른 것은?", "① 비용이 상대적으로 낮다."),
+    ("다음 중 데이터 정제에 대한 설명으로 옳지 않은 것은?", "④ 결측치 처리"),
+    ("다음 중 빅데이터 시대의 위험 요인으로 옳지 않은 것은?", "③ 인간-인간 상호작용 위기"),
+]
+
+# genanki 덱 ID와 덱 이름 정의
+my_deck = genanki.Deck(
+    123456789,
+    '데이터 분석 기초 덱'
+)
+
+# genanki 모델(카드 형식) 정의
+my_model = genanki.Model(
+    123456789,
+    '기본 모델',
+    fields=[
+        {'name': 'Question'},
+        {'name': 'Answer'},
+    ],
+    templates=[
+        {
+            'name': 'Card 1',
+            'qfmt': '{{Question}}',
+            'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',
+        },
+    ])
+
+# 질문과 정답을 Anki 노트로 변환하고 덱에 추가
+for qa in questions_answers:
+    note = genanki.Note(
+        model=my_model,
+        fields=[qa[0], qa[1]]
+    )
+    my_deck.add_note(note)
+
+# .apkg 파일 생성
+genanki.Package(my_deck).write_to_file('data_analysis_basic_deck.apkg')
+
+print("Anki 패키지 생성 완료!")
+
+
+```
+
+    Anki 패키지 생성 완료!
+
